@@ -51,7 +51,7 @@ public class TodoService {
     public Page<TodoResponse> getTodos(int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(pageable);
+        Page<Todo> todos = todoRepository.findAllWithUserByOrderByModifiedAtDesc(pageable);
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
