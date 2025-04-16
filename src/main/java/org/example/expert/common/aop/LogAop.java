@@ -1,4 +1,4 @@
-package org.example.expert.aop;
+package org.example.expert.common.aop;
 
 import java.time.LocalDateTime;
 

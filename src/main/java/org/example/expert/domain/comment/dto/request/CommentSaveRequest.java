@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CommentSaveRequest {
 
-    @NotBlank
-    private String contents;
+	@NotBlank(message = "내용은 필수 입력값이며 공백이 아니어야 합니다.")
+	private String contents;
+
 }
