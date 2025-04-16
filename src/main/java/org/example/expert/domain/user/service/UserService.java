@@ -31,12 +31,12 @@ public class UserService {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new InvalidRequestException(HttpStatus.BAD_REQUEST, "User not found"));
 
-		if (passwordEncoder.matches(userChangePasswordRequest.getNewPassword(), user.getPassword())) {
-			throw new InvalidRequestException(HttpStatus.BAD_REQUEST, "새 비밀번호는 기존 비밀번호와 같을 수 없습니다.");
-		}
-
 		if (!passwordEncoder.matches(userChangePasswordRequest.getOldPassword(), user.getPassword())) {
 			throw new InvalidRequestException(HttpStatus.BAD_REQUEST, "잘못된 비밀번호입니다.");
+		}
+
+		if (passwordEncoder.matches(userChangePasswordRequest.getNewPassword(), user.getPassword())) {
+			throw new InvalidRequestException(HttpStatus.BAD_REQUEST, "새 비밀번호는 기존 비밀번호와 같을 수 없습니다.");
 		}
 
 		user.changePassword(passwordEncoder.encode(userChangePasswordRequest.getNewPassword()));
