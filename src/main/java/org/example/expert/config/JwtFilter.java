@@ -48,9 +48,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
 		// JWT 유효성 검사와 claims 추출
 		Claims claims = jwtUtil.extractClaims(jwt);
-		if (claims == null) {
-			throw new JwtFilterException(HttpStatus.BAD_REQUEST, "잘못된 JWT 토큰입니다.");
-		}
 
 		UserRole userRole = UserRole.valueOf(claims.get("userRole", String.class));
 

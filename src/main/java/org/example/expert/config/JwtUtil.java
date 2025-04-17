@@ -61,7 +61,7 @@ public class JwtUtil {
 		throw new ServerException(HttpStatus.INTERNAL_SERVER_ERROR, "Not Found Token");
 	}
 
-	public Claims extractClaims(String token) {
+	public Claims extractClaims(String token) throws JwtUtilException {
 		try {
 			return Jwts.parserBuilder()
 				.setSigningKey(key)
@@ -71,8 +71,7 @@ public class JwtUtil {
 		} catch (SecurityException | MalformedJwtException e) {
 			throw new JwtUtilException(HttpStatus.FORBIDDEN, "Invalid JWT signature, 유효하지 않는 JWT 서명 입니다.");
 		} catch (ExpiredJwtException e) {
-			log.error("Expired JWT token, 만료된 JWT token 입니다.", e);
-			return e.getClaims();
+			throw new JwtUtilException(HttpStatus.FORBIDDEN, "Expired JWT token, 만료된 JWT token 입니다.");
 		} catch (UnsupportedJwtException e) {
 			throw new JwtUtilException(HttpStatus.BAD_REQUEST, "Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.");
 		} catch (Exception e) {
