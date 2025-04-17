@@ -3,6 +3,7 @@ package org.example.expert.config;
 import java.io.IOException;
 
 import org.example.expert.common.util.ErrorResponseUtil;
+import org.example.expert.common.util.LogUtils;
 import org.example.expert.config.exception.JwtFilterException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -25,20 +26,19 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
 		@NonNull FilterChain chain) throws ServletException, IOException {
-		// ObjectMapper objectMapper = new ObjectMapper();
-
 		try {
 			chain.doFilter(request, response);
 		} catch (JwtFilterException jwtFilterException) {
-			if (jwtFilterException.getHttpStatus().equals(HttpStatus.FORBIDDEN)) {
-				response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			LogUtils.logError(jwtFilterException);
+
+			if (jwtFilterException.getHttpStatus().equals(HttpStatus.UNAUTHORIZED)) {
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			} else if (jwtFilterException.getHttpStatus().equals(HttpStatus.BAD_REQUEST)) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			}
 
 			response.setContentType("application/json");
 			response.setCharacterEncoding("UTF-8");
-
 			objectMapper.writeValue(response.getWriter(),
 				ErrorResponseUtil.getErrorResponse(jwtFilterException.getHttpStatus(),
 					jwtFilterException.getMessage()));

@@ -69,9 +69,9 @@ public class JwtUtil {
 				.parseClaimsJws(token)
 				.getBody();
 		} catch (SecurityException | MalformedJwtException e) {
-			throw new JwtUtilException(HttpStatus.FORBIDDEN, "Invalid JWT signature, 유효하지 않는 JWT 서명 입니다.");
+			throw new JwtUtilException(HttpStatus.UNAUTHORIZED, "Invalid JWT signature, 유효하지 않는 JWT 서명 입니다.");
 		} catch (ExpiredJwtException e) {
-			throw new JwtUtilException(HttpStatus.FORBIDDEN, "Expired JWT token, 만료된 JWT token 입니다.");
+			throw new JwtUtilException(HttpStatus.UNAUTHORIZED, "Expired JWT token, 만료된 JWT token 입니다.");
 		} catch (UnsupportedJwtException e) {
 			throw new JwtUtilException(HttpStatus.BAD_REQUEST, "Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.");
 		} catch (Exception e) {
