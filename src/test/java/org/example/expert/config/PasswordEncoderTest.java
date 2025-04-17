@@ -10,19 +10,35 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
 class PasswordEncoderTest {
-
 	@InjectMocks
 	private PasswordEncoder passwordEncoder;
+
+	public static final String RAW_PASSWORD = "testPassword";
+
+	@Test
+	@DisplayName("비밀번호 암호화 성공")
+	void success_encode() {
+		// Given
+
+		// When
+		String encodedPassword = passwordEncoder.encode(RAW_PASSWORD);
+
+		// Then
+		assertAll(
+			() -> assertNotNull(encodedPassword),
+			() -> assertNotEquals(RAW_PASSWORD, encodedPassword)
+		);
+
+	}
 
 	@Test
 	@DisplayName("matches 테스트 성공")
 	void success_matches() {
 		// given
-		String rawPassword = "testPassword";
-		String encodedPassword = passwordEncoder.encode(rawPassword);
+		String encodedPassword = passwordEncoder.encode(RAW_PASSWORD);
 
 		// when
-		boolean matches = passwordEncoder.matches(rawPassword, encodedPassword);
+		boolean matches = passwordEncoder.matches(RAW_PASSWORD, encodedPassword);
 
 		// then
 		assertTrue(matches);

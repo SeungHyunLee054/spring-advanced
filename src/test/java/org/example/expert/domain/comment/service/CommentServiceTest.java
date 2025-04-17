@@ -4,9 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.example.expert.domain.comment.dto.request.CommentSaveRequest;
+import org.example.expert.domain.comment.dto.response.CommentResponse;
 import org.example.expert.domain.comment.dto.response.CommentSaveResponse;
 import org.example.expert.domain.comment.entity.Comment;
 import org.example.expert.domain.comment.repository.CommentRepository;
@@ -16,60 +18,146 @@ import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.enums.UserRole;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
 
 	@Mock
 	private CommentRepository commentRepository;
+
 	@Mock
 	private TodoRepository todoRepository;
+
 	@InjectMocks
 	private CommentService commentService;
 
-	@Test
-	@DisplayName("comment 등록 중 할일을 찾지 못해 에러가 발생한다")
-	public void fail_saveComment_InvalidRequestException() {
-		// given
-		long todoId = 1;
-		CommentSaveRequest request = new CommentSaveRequest("contents");
-		AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
+	@Spy
+	private User userAdmin;
 
-		given(todoRepository.findById(anyLong())).willReturn(Optional.empty());
+	@Spy
+	private User userLoggedIn;
 
-		// when
-		InvalidRequestException exception = assertThrows(InvalidRequestException.class,
-			() -> commentService.saveComment(authUser, todoId, request)
-		);
+	@Spy
+	private Todo todo;
 
-		// then
-		assertEquals("Todo not found", exception.getMessage());
+	@Spy
+	private Comment comment;
+
+	private final AuthUser authUser = new AuthUser(1L, "userAdmin@test", UserRole.USER);
+
+	private final CommentSaveRequest commentSaveRequest = new CommentSaveRequest("contents");
+
+	@BeforeEach
+	void setUp() {
+		userAdmin = User.builder()
+			.id(2L)
+			.email("admin@test")
+			.password("encodedTestPassword")
+			.userRole(UserRole.ADMIN)
+			.build();
+
+		userLoggedIn = User.builder()
+			.id(1L)
+			.email("user@test")
+			.password("encodedTestPassword")
+			.userRole(UserRole.ADMIN)
+			.build();
+
+		todo = Todo.builder()
+			.id(1L)
+			.title("test")
+			.contents("test")
+			.weather("weather")
+			.user(userAdmin)
+			.build();
+
+		comment = Comment.builder()
+			.id(1L)
+			.contents("test")
+			.user(userLoggedIn)
+			.todo(todo)
+			.build();
 	}
 
-	@Test
-	@DisplayName("comment를 정상적으로 등록한다")
-	public void success_saveComment() {
-		// given
-		long todoId = 1;
-		CommentSaveRequest request = new CommentSaveRequest("contents");
-		AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
-		User user = User.fromAuthUser(authUser);
-		Todo todo = new Todo("title", "title", "contents", user);
-		Comment comment = new Comment(request.getContents(), user, todo);
+	@Nested
+	class SaveCommentTest {
+		@Test
+		@DisplayName("댓글 저장 성공")
+		public void success_saveComment() {
+			// given
+			given(todoRepository.findById(anyLong()))
+				.willReturn(Optional.of(todo));
+			given(commentRepository.save(any()))
+				.willReturn(comment);
 
-		given(todoRepository.findById(anyLong())).willReturn(Optional.of(todo));
-		given(commentRepository.save(any())).willReturn(comment);
+			// when
+			CommentSaveResponse response = commentService.saveComment(authUser, 1L, commentSaveRequest);
 
-		// when
-		CommentSaveResponse result = commentService.saveComment(authUser, todoId, request);
+			// then
+			assertAll(
+				() -> assertEquals(1L, response.getId()),
+				() -> assertEquals("test", response.getContents()),
+				() -> assertEquals(1L, response.getUser().getId()),
+				() -> assertEquals("user@test", response.getUser().getEmail())
+			);
 
-		// then
-		assertNotNull(result);
+		}
+
+		@Test
+		@DisplayName("댓글 저장 실패 - 할일을 찾일 수 없음")
+		public void fail_saveComment_todoNotFound() {
+			// given
+			given(todoRepository.findById(anyLong()))
+				.willReturn(Optional.empty());
+
+			// when
+			InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+				() -> commentService.saveComment(authUser, 1L, commentSaveRequest)
+			);
+
+			// then
+			assertAll(
+				() -> assertEquals(HttpStatus.BAD_REQUEST, exception.getHttpStatus()),
+				() -> assertEquals("Todo not found", exception.getMessage())
+			);
+
+		}
 	}
+
+	@Nested
+	@DisplayName("댓글 전체 조회 테스트")
+	class GetCommentsTest {
+		@Test
+		@DisplayName("댓글 전체 조회 성공")
+		void success_getComments() {
+			// Given
+			given(commentRepository.findAllWithUserByTodoId(anyLong()))
+				.willReturn(List.of(comment));
+
+			// When
+			List<CommentResponse> responses = commentService.getComments(1L);
+
+			// Then
+			for (CommentResponse response : responses) {
+				assertAll(
+					() -> assertEquals(1L, response.getId()),
+					() -> assertEquals("test", response.getContents()),
+					() -> assertEquals(1L, response.getUser().getId()),
+					() -> assertEquals("admin@test", response.getUser().getEmail())
+				);
+			}
+
+		}
+	}
+
 }
