@@ -1,6 +1,8 @@
 package org.example.expert.domain.manager.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.expert.domain.todo.entity.Todo;
@@ -8,8 +10,10 @@ import org.example.expert.domain.user.entity.User;
 
 @Getter
 @Entity
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "managers")
+@Builder(toBuilder = true)
 public class Manager {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,8 +26,4 @@ public class Manager {
     @JoinColumn(name = "todo_id", nullable = false)
     private Todo todo;
 
-    public Manager(User user, Todo todo) {
-        this.user = user;
-        this.todo = todo;
-    }
 }

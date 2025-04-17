@@ -1,6 +1,5 @@
 package org.example.expert.domain.manager.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,7 +12,6 @@ import org.example.expert.domain.manager.entity.Manager;
 import org.example.expert.domain.manager.repository.ManagerRepository;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
-import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -49,13 +47,14 @@ public class ManagerService {
 			throw new InvalidRequestException(HttpStatus.BAD_REQUEST, "일정 작성자는 본인을 담당자로 등록할 수 없습니다.");
 		}
 
-		Manager newManagerUser = new Manager(managerUser, todo);
+		Manager newManagerUser = Manager.builder()
+			.user(managerUser)
+			.todo(todo)
+			.build();
+
 		Manager savedManagerUser = managerRepository.save(newManagerUser);
 
-		return new ManagerSaveResponse(
-			savedManagerUser.getId(),
-			new UserResponse(managerUser.getId(), managerUser.getEmail())
-		);
+		return ManagerSaveResponse.from(savedManagerUser);
 	}
 
 	@Transactional(readOnly = true)
@@ -63,22 +62,16 @@ public class ManagerService {
 		Todo todo = todoRepository.findById(todoId)
 			.orElseThrow(() -> new InvalidRequestException(HttpStatus.BAD_REQUEST, "Todo not found"));
 
-		List<Manager> managerList = managerRepository.findByTodoIdWithUser(todo.getId());
+		List<Manager> managerList = managerRepository.findWithUserByTodoId(todo.getId());
 
-		List<ManagerResponse> dtoList = new ArrayList<>();
-		for (Manager manager : managerList) {
-			User user = manager.getUser();
-			dtoList.add(new ManagerResponse(
-				manager.getId(),
-				new UserResponse(user.getId(), user.getEmail())
-			));
-		}
-		return dtoList;
+		return managerList.stream()
+			.map(ManagerResponse::from)
+			.toList();
 	}
 
 	@Transactional
-	public void deleteManager(long userId, long todoId, long managerId) {
-		User user = userRepository.findById(userId)
+	public void deleteManager(AuthUser authUser, long todoId, long managerId) {
+		User user = userRepository.findById(authUser.getId())
 			.orElseThrow(() -> new InvalidRequestException(HttpStatus.BAD_REQUEST, "User not found"));
 
 		Todo todo = todoRepository.findById(todoId)

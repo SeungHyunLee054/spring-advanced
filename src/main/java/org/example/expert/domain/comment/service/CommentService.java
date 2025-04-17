@@ -1,6 +1,5 @@
 package org.example.expert.domain.comment.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.example.expert.domain.comment.dto.request.CommentSaveRequest;
@@ -12,7 +11,6 @@ import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
-import org.example.expert.domain.user.dto.response.UserResponse;
 import org.example.expert.domain.user.entity.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,38 +28,26 @@ public class CommentService {
 	@Transactional
 	public CommentSaveResponse saveComment(AuthUser authUser, long todoId, CommentSaveRequest commentSaveRequest) {
 		User user = User.fromAuthUser(authUser);
-		Todo todo = todoRepository.findById(todoId).orElseThrow(() ->
-			new InvalidRequestException(HttpStatus.BAD_REQUEST, "Todo not found"));
+		Todo todo = todoRepository.findById(todoId)
+			.orElseThrow(() -> new InvalidRequestException(HttpStatus.BAD_REQUEST, "Todo not found"));
 
-		Comment newComment = new Comment(
-			commentSaveRequest.getContents(),
-			user,
-			todo
-		);
+		Comment newComment = Comment.builder()
+			.contents(commentSaveRequest.getContents())
+			.user(user)
+			.todo(todo)
+			.build();
 
 		Comment savedComment = commentRepository.save(newComment);
 
-		return new CommentSaveResponse(
-			savedComment.getId(),
-			savedComment.getContents(),
-			new UserResponse(user.getId(), user.getEmail())
-		);
+		return CommentSaveResponse.from(savedComment);
 	}
 
 	@Transactional(readOnly = true)
 	public List<CommentResponse> getComments(long todoId) {
-		List<Comment> commentList = commentRepository.findByTodoIdWithUser(todoId);
+		List<Comment> commentList = commentRepository.findAllWithUserByTodoId(todoId);
 
-		List<CommentResponse> dtoList = new ArrayList<>();
-		for (Comment comment : commentList) {
-			User user = comment.getUser();
-			CommentResponse dto = new CommentResponse(
-				comment.getId(),
-				comment.getContents(),
-				new UserResponse(user.getId(), user.getEmail())
-			);
-			dtoList.add(dto);
-		}
-		return dtoList;
+		return commentList.stream()
+			.map(CommentResponse::from)
+			.toList();
 	}
 }

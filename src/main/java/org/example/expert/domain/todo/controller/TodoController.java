@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -37,8 +38,8 @@ public class TodoController {
 
 	@GetMapping
 	public ResponseEntity<Page<TodoResponse>> getTodos(
-		@RequestParam(defaultValue = "1") int page,
-		@RequestParam(defaultValue = "10") int size
+		@RequestParam(defaultValue = "1") @Min(1) int page,
+		@RequestParam(defaultValue = "10") @Min(1) int size
 	) {
 		return ResponseEntity.ok(todoService.getTodos(page, size));
 	}

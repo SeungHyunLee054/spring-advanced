@@ -23,7 +23,7 @@ public class UserService {
 	public UserResponse getUser(long userId) {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new InvalidRequestException(HttpStatus.BAD_REQUEST, "User not found"));
-		return new UserResponse(user.getId(), user.getEmail());
+		return UserResponse.from(user);
 	}
 
 	@Transactional
