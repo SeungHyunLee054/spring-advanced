@@ -53,7 +53,7 @@ class CommentServiceTest {
 	@Spy
 	private Comment comment;
 
-	private final AuthUser authUser = new AuthUser(1L, "userAdmin@test", UserRole.USER);
+	private final AuthUser authUser = new AuthUser(1L, "user@test", UserRole.USER);
 
 	private final CommentSaveRequest commentSaveRequest = new CommentSaveRequest("contents");
 
@@ -153,7 +153,7 @@ class CommentServiceTest {
 					() -> assertEquals(1L, response.getId()),
 					() -> assertEquals("test", response.getContents()),
 					() -> assertEquals(1L, response.getUser().getId()),
-					() -> assertEquals("admin@test", response.getUser().getEmail())
+					() -> assertEquals("user@test", response.getUser().getEmail())
 				);
 			}
 
