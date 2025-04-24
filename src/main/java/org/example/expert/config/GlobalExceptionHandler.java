@@ -7,7 +7,6 @@ import org.example.expert.common.exception.BaseException;
 import org.example.expert.common.util.ErrorResponseUtil;
 import org.example.expert.common.util.LogUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -26,10 +25,11 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<List<Map<String, Object>>> inputValidationExceptionHandler(BindingResult result) {
-		log.error(result.getFieldErrors().toString());
+	public ResponseEntity<List<Map<String, Object>>> inputValidationExceptionHandler(
+		MethodArgumentNotValidException ex) {
+		LogUtils.logError(ex);
 
-		return ErrorResponseUtil.getErrorResponses(result);
+		return ErrorResponseUtil.getErrorResponses(ex.getBindingResult());
 	}
 
 }
